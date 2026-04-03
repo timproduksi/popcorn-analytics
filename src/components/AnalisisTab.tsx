@@ -315,7 +315,7 @@ const AnalisisTab = ({ apiData, rawData, sheets }: AnalisisTabProps) => {
                           : "bg-primary text-primary-foreground font-bold cursor-pointer"
                         : ""
                     }`}
-                    onClick={() => cell.isPanen && cell.panenCode && handleCellClick(cell.panenCode)}
+                    onClick={() => cell.isPanen && cell.panenCode && handleCellClick(cell.panenCode, cell.isKuning)}
                   >
                     {cell.isPanen ? "✓" : "0"}
                   </td>
