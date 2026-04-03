@@ -89,7 +89,7 @@ const AnalisisTab = ({ apiData, rawData, sheets }: AnalisisTabProps) => {
     const series2 = compareSheet ? getSeriesData(compareSheet, filterKabupaten) : null;
     const keys: { key: string; color: string }[] = [];
 
-    Object.keys(COLORS).forEach(phase => {
+    Object.keys(COLORS).filter(phase => selectedPhases.includes(phase)).forEach(phase => {
       if (series1[phase]) {
         const suffix = series2 ? ` (${selectedSheet})` : "";
         keys.push({ key: `${phase}${suffix}`, color: COLORS[phase] });
