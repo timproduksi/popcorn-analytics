@@ -360,23 +360,32 @@ function buildTableData(data: any[], filterKabupaten: string) {
   const grouped: Record<string, { kab: string; subseg: string; bulan: number[][] }> = {};
 
   data.forEach(row => {
-    const kab = row.A || row.Kabupaten || "";
-    const subseg = row.B || row['ID-Subsegmen'] || "";
+    const kab = String(row.A || row.Kabupaten || "").trim(); // ✅ pastikan string
+    const subseg = String(row.B || row['ID-Subsegmen'] || "").trim();
     const key = `${kab}-${subseg}`;
+
     if (!grouped[key]) {
       grouped[key] = { kab, subseg, bulan: Array.from({ length: 12 }, () => []) };
     }
+
     for (let i = 3; i <= 14; i++) {
       const colName = String.fromCharCode(65 + i);
       const nilai = row[colName] || row[Object.keys(row)[i]];
-      if (nilai) grouped[key].bulan[i - 3].push(parseInt(nilai));
+      if (nilai !== undefined && nilai !== null && nilai !== "") {
+        grouped[key].bulan[i - 3].push(parseInt(nilai));
+      }
     }
   });
 
   let items = Object.values(grouped);
-  if (filterKabupaten) items = items.filter(it => it.kab === filterKabupaten);
+
+  // 🔥 FIX UTAMA: exact match kode kabupaten
+  if (filterKabupaten) {
+    items = items.filter(it => String(it.kab) === String(filterKabupaten));
+  }
 
   let totalPanen = 0;
+
   const rows: TableRow[] = items.map(item => {
     const bulanCells: BulanCell[] = item.bulan.map((vals, idx) => {
       let isPanen = false, isKuning = false;
@@ -403,6 +412,7 @@ function buildTableData(data: any[], filterKabupaten: string) {
     });
 
     const panenBulan = bulanCells.map((c, i) => c.isPanen ? i : -1).filter(i => i !== -1);
+
     let jumlahPanen = 0;
     if (panenBulan.length > 0) {
       jumlahPanen = 1;
@@ -410,6 +420,7 @@ function buildTableData(data: any[], filterKabupaten: string) {
         if (panenBulan[i] !== panenBulan[i - 1] + 1) jumlahPanen++;
       }
     }
+
     totalPanen += jumlahPanen;
 
     return { kab: item.kab, subseg: item.subseg, bulanCells, jumlahPanen };
