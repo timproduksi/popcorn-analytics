@@ -374,7 +374,7 @@ function buildTableData(data: any[], filterKabupaten: string) {
   });
 
   let items = Object.values(grouped);
-  if (filterKabupaten) items = items.filter(it => it.kab === filterKabupaten);
+  if (filterKabupaten) items = items.filter(it => it.kab.trim().toLowerCase() === filterKabupaten.trim().toLowerCase());
 
   let totalPanen = 0;
   const rows: TableRow[] = items.map(item => {
