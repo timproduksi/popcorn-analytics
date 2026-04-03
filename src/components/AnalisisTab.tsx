@@ -1,8 +1,10 @@
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef } from "react";
 import { COLORS, BULAN_NAMES, PHASE_DESCRIPTIONS } from "@/lib/api";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
 } from "recharts";
+
+const ALL_PHASES = Object.keys(COLORS);
 
 interface AnalisisTabProps {
   apiData: Record<string, any>;
@@ -15,8 +17,27 @@ const AnalisisTab = ({ apiData, rawData, sheets }: AnalisisTabProps) => {
   const [compareSheet, setCompareSheet] = useState("");
   const [filterKabupaten, setFilterKabupaten] = useState("");
   const [kabupatenList, setKabupatenList] = useState<string[]>([]);
+  const [selectedPhases, setSelectedPhases] = useState<string[]>(ALL_PHASES);
+  const [showPhaseDropdown, setShowPhaseDropdown] = useState(false);
+  const phaseDropdownRef = useRef<HTMLDivElement>(null);
   const [modalText, setModalText] = useState("");
   const [showModal, setShowModal] = useState(false);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (phaseDropdownRef.current && !phaseDropdownRef.current.contains(e.target as Node)) {
+        setShowPhaseDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const togglePhase = (phase: string) => {
+    setSelectedPhases(prev =>
+      prev.includes(phase) ? prev.filter(p => p !== phase) : [...prev, phase]
+    );
+  };
 
   useEffect(() => {
     const allKab = new Set<string>();
@@ -47,7 +68,7 @@ const AnalisisTab = ({ apiData, rawData, sheets }: AnalisisTabProps) => {
 
     return labels.map((label: string, i: number) => {
       const point: any = { bulan: label };
-      Object.keys(COLORS).forEach(phase => {
+      Object.keys(COLORS).filter(phase => selectedPhases.includes(phase)).forEach(phase => {
         if (series1[phase]) {
           const suffix = series2 ? ` (${selectedSheet})` : "";
           point[`${phase}${suffix}`] = series1[phase][i] || 0;
@@ -68,7 +89,7 @@ const AnalisisTab = ({ apiData, rawData, sheets }: AnalisisTabProps) => {
     const series2 = compareSheet ? getSeriesData(compareSheet, filterKabupaten) : null;
     const keys: { key: string; color: string }[] = [];
 
-    Object.keys(COLORS).forEach(phase => {
+    Object.keys(COLORS).filter(phase => selectedPhases.includes(phase)).forEach(phase => {
       if (series1[phase]) {
         const suffix = series2 ? ` (${selectedSheet})` : "";
         keys.push({ key: `${phase}${suffix}`, color: COLORS[phase] });
@@ -178,6 +199,55 @@ const AnalisisTab = ({ apiData, rawData, sheets }: AnalisisTabProps) => {
             <option value="">Semua Kabupaten</option>
             {kabupatenList.map(k => <option key={k} value={k}>{k}</option>)}
           </select>
+        </div>
+
+        <div className="space-y-1 relative" ref={phaseDropdownRef}>
+          <label className="text-sm font-semibold text-foreground">Nilai Amatan:</label>
+          <button
+            type="button"
+            onClick={() => setShowPhaseDropdown(prev => !prev)}
+            className="block w-full rounded-lg border border-input bg-card px-3 py-2 text-sm text-left min-w-[200px]"
+          >
+            {selectedPhases.length === ALL_PHASES.length
+              ? "Semua Nilai Amatan"
+              : selectedPhases.length === 0
+                ? "Pilih Nilai Amatan"
+                : `${selectedPhases.length} dipilih`}
+          </button>
+          {showPhaseDropdown && (
+            <div className="absolute z-50 mt-1 w-64 max-h-60 overflow-y-auto rounded-lg border border-input bg-card shadow-xl">
+              <div className="p-2 border-b border-border flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setSelectedPhases([...ALL_PHASES])}
+                  className="text-xs px-2 py-1 rounded bg-primary text-primary-foreground"
+                >Pilih Semua</button>
+                <button
+                  type="button"
+                  onClick={() => setSelectedPhases([])}
+                  className="text-xs px-2 py-1 rounded bg-muted text-muted-foreground"
+                >Hapus Semua</button>
+              </div>
+              {ALL_PHASES.map(phase => (
+                <label
+                  key={phase}
+                  className="flex items-center gap-2 px-3 py-1.5 hover:bg-muted/50 cursor-pointer text-sm"
+                >
+                  <input
+                    type="checkbox"
+                    checked={selectedPhases.includes(phase)}
+                    onChange={() => togglePhase(phase)}
+                    className="rounded border-input"
+                  />
+                  <span
+                    className="w-3 h-3 rounded-full inline-block flex-shrink-0"
+                    style={{ backgroundColor: COLORS[phase] }}
+                  />
+                  <span className="text-foreground">{phase}</span>
+                </label>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
