@@ -68,7 +68,7 @@ const AnalisisTab = ({ apiData, rawData, sheets }: AnalisisTabProps) => {
 
     return labels.map((label: string, i: number) => {
       const point: any = { bulan: label };
-      Object.keys(COLORS).forEach(phase => {
+      Object.keys(COLORS).filter(phase => selectedPhases.includes(phase)).forEach(phase => {
         if (series1[phase]) {
           const suffix = series2 ? ` (${selectedSheet})` : "";
           point[`${phase}${suffix}`] = series1[phase][i] || 0;
