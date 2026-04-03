@@ -145,14 +145,21 @@ const AnalisisTab = ({ apiData, rawData, sheets }: AnalisisTabProps) => {
   // Table rendering
   const tableData = buildTableData(rawData[selectedSheet] || [], filterKabupaten);
 
-  const handleCellClick = (nilaiStr: string) => {
+  const handleCellClick = (nilaiStr: string, isKuning: boolean) => {
     let text = "";
-    if (nilaiStr === "6") text = "Panen diantara 2 survei kode 6 Panen Muda";
-    else if (nilaiStr === "7") text = "Panen diantara 2 survei kode 7 Panen Pipilan";
-    else {
+    if (isKuning) {
+      if (nilaiStr === "6") text = "Panen diantara 2 survei — Kode 6: Panen Muda";
+      else if (nilaiStr === "7") text = "Panen diantara 2 survei — Kode 7: Panen Pipilan";
+      else text = "Panen diantara 2 survei";
+    } else {
       const nilais = nilaiStr.split(",").map(n => parseInt(n));
-      const faseList = nilais.map(n => PHASE_DESCRIPTIONS[n] || "Tidak diketahui").join(", ");
-      text = `Nilai Amatan: ${nilaiStr} — Fase: ${faseList}`;
+      const faseList = nilais.map(n => {
+        if (n === 5) return "Kode 5: Panen Hijauan";
+        if (n === 6) return "Kode 6: Panen Muda";
+        if (n === 7) return "Kode 7: Panen Pipilan";
+        return `Kode ${n}: Tidak diketahui`;
+      }).join("\n");
+      text = `Panen teridentifikasi:\n${faseList}`;
     }
     setModalText(text);
     setShowModal(true);
