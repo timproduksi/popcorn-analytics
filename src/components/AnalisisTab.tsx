@@ -332,7 +332,7 @@ const AnalisisTab = ({ apiData, rawData, sheets }: AnalisisTabProps) => {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/40 backdrop-blur-sm" onClick={() => setShowModal(false)}>
           <div className="bg-card rounded-xl p-6 shadow-2xl max-w-sm mx-4 animate-scale-in" onClick={e => e.stopPropagation()}>
             <h3 className="text-lg font-semibold mb-2 text-foreground">Detail Panen</h3>
-            <p className="text-sm text-muted-foreground">{modalText}</p>
+            <p className="text-sm text-muted-foreground whitespace-pre-line">{modalText}</p>
             <button onClick={() => setShowModal(false)} className="mt-4 px-4 py-2 gradient-primary text-primary-foreground rounded-lg text-sm font-medium">
               Tutup
             </button>
