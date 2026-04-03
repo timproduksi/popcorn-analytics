@@ -1,8 +1,10 @@
-import { useEffect, useState, useRef, useCallback } from "react";
+import { useEffect, useState, useRef } from "react";
 import { COLORS, BULAN_NAMES, PHASE_DESCRIPTIONS } from "@/lib/api";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer,
 } from "recharts";
+
+const ALL_PHASES = Object.keys(COLORS);
 
 interface AnalisisTabProps {
   apiData: Record<string, any>;
@@ -15,8 +17,27 @@ const AnalisisTab = ({ apiData, rawData, sheets }: AnalisisTabProps) => {
   const [compareSheet, setCompareSheet] = useState("");
   const [filterKabupaten, setFilterKabupaten] = useState("");
   const [kabupatenList, setKabupatenList] = useState<string[]>([]);
+  const [selectedPhases, setSelectedPhases] = useState<string[]>(ALL_PHASES);
+  const [showPhaseDropdown, setShowPhaseDropdown] = useState(false);
+  const phaseDropdownRef = useRef<HTMLDivElement>(null);
   const [modalText, setModalText] = useState("");
   const [showModal, setShowModal] = useState(false);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (phaseDropdownRef.current && !phaseDropdownRef.current.contains(e.target as Node)) {
+        setShowPhaseDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  const togglePhase = (phase: string) => {
+    setSelectedPhases(prev =>
+      prev.includes(phase) ? prev.filter(p => p !== phase) : [...prev, phase]
+    );
+  };
 
   useEffect(() => {
     const allKab = new Set<string>();
