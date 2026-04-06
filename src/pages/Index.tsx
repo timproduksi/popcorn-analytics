@@ -1,14 +1,16 @@
 import { useEffect, useState } from "react";
-import { BarChart3, Database, LayoutDashboard } from "lucide-react";
+import { BarChart3, Database, LayoutDashboard, Map } from "lucide-react";
 import Header from "@/components/Header";
 import DashboardTab from "@/components/DashboardTab";
 import AnalisisTab from "@/components/AnalisisTab";
 import DataTab from "@/components/DataTab";
+import PetaTab from "@/components/PetaTab";
 import { fetchApiData, fetchRawData } from "@/lib/api";
 
 const TABS = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
   { id: "analisis", label: "Analisis Data", icon: BarChart3 },
+  { id: "peta", label: "Peta", icon: Map },
   { id: "data", label: "Data", icon: Database },
 ];
 
@@ -92,6 +94,7 @@ const Index = () => {
           <>
             {activeTab === "dashboard" && <DashboardTab sheets={sheets} rawData={rawData} />}
             {activeTab === "analisis" && <AnalisisTab apiData={apiData} rawData={rawData} sheets={sheets} />}
+            {activeTab === "peta" && <PetaTab apiData={apiData} rawData={rawData} sheets={sheets} />}
             {activeTab === "data" && <DataTab />}
           </>
         )}
