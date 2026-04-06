@@ -94,6 +94,7 @@ const Index = () => {
           <>
             {activeTab === "dashboard" && <DashboardTab sheets={sheets} rawData={rawData} />}
             {activeTab === "analisis" && <AnalisisTab apiData={apiData} rawData={rawData} sheets={sheets} />}
+            {activeTab === "peta" && <PetaTab apiData={apiData} rawData={rawData} sheets={sheets} />}
             {activeTab === "data" && <DataTab />}
           </>
         )}
