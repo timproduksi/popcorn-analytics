@@ -344,6 +344,13 @@ const PetaTab = ({ rawData, sheets }: PetaTabProps) => {
 
         <div className="flex flex-wrap gap-3 mb-4">
           <select
+            value={selectedSheet2}
+            onChange={e => setSelectedSheet2(e.target.value)}
+            className="px-3 py-2 rounded-lg bg-muted border border-border text-sm text-foreground"
+          >
+            {sheets.map(s => <option key={s} value={s}>{s}</option>)}
+          </select>
+          <select
             value={selectedKab2}
             onChange={e => setSelectedKab2(e.target.value)}
             className="px-3 py-2 rounded-lg bg-muted border border-border text-sm text-foreground"
