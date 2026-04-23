@@ -186,7 +186,7 @@ const PetaTab = ({ rawData, sheets }: PetaTabProps) => {
 
   // ===== Second map: gradient by phase count =====
   const phaseCountByKab = useMemo(() => {
-    const data = rawData[selectedSheet] || [];
+    const data = rawData[selectedSheet2] || [];
     const counts: Record<string, number> = {};
     data.forEach(row => {
       const kab = String(row.A || row.Kabupaten || "").trim();
