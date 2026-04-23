@@ -91,12 +91,22 @@ const PHASE_MAP: Record<number, string> = {
   11: "Puso", 15: "Bera",
 };
 
+const PHASE_OPTIONS = Object.entries(PHASE_MAP).map(([k, v]) => ({ code: Number(k), name: v }));
+
 const PetaTab = ({ rawData, sheets }: PetaTabProps) => {
   const [selectedSheet, setSelectedSheet] = useState(sheets[0] || "");
   const [selectedBulan, setSelectedBulan] = useState(0);
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const markersRef = useRef<L.Marker[]>([]);
+
+  // Second map (gradient by phase count)
+  const [selectedKab2, setSelectedKab2] = useState<string>("ALL");
+  const [selectedBulan2, setSelectedBulan2] = useState<number>(0);
+  const [selectedFase2, setSelectedFase2] = useState<number>(1);
+  const map2Ref = useRef<HTMLDivElement>(null);
+  const map2InstanceRef = useRef<L.Map | null>(null);
+  const markers2Ref = useRef<L.CircleMarker[]>([]);
 
   useEffect(() => {
     if (sheets.length > 0 && !selectedSheet) setSelectedSheet(sheets[0]);
