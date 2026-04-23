@@ -202,7 +202,7 @@ const PetaTab = ({ rawData, sheets }: PetaTabProps) => {
       }
     });
     return counts;
-  }, [rawData, selectedSheet, selectedBulan2, selectedFase2, selectedKab2]);
+  }, [rawData, selectedSheet2, selectedBulan2, selectedFase2, selectedKab2]);
 
   const maxCount = useMemo(
     () => Math.max(1, ...Object.values(phaseCountByKab)),
