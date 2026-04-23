@@ -237,8 +237,8 @@ const PetaTab = ({ rawData, sheets }: PetaTabProps) => {
     const r = parseInt(h.substring(0, 2), 16);
     const g = parseInt(h.substring(2, 4), 16);
     const b = parseInt(h.substring(4, 6), 16);
-    // mix with white: t=0 -> white-ish, t=1 -> full color
-    const t = 0.15 + intensity * 0.85;
+    // mix with white: t=0.35 -> pucat, t=1 -> warna penuh sesuai legenda
+    const t = 0.35 + intensity * 0.65;
     const mix = (c: number) => Math.round(255 + (c - 255) * t);
     return `rgb(${mix(r)},${mix(g)},${mix(b)})`;
   };
