@@ -102,6 +102,7 @@ const PetaTab = ({ rawData, sheets }: PetaTabProps) => {
   const markersRef = useRef<L.Marker[]>([]);
 
   // Second map (choropleth by phase count)
+  const [selectedSheet2, setSelectedSheet2] = useState<string>(sheets[0] || "");
   const [selectedKab2, setSelectedKab2] = useState<string>("ALL");
   const [selectedBulan2, setSelectedBulan2] = useState<number>(0);
   const [selectedFase2, setSelectedFase2] = useState<number>(1);
