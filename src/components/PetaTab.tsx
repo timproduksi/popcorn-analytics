@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { COLORS, BULAN_NAMES } from "@/lib/api";
+import jatengGeo from "@/data/jateng-kab.json";
 
 // Approximate coordinates for Jawa Tengah kabupaten
 const KABUPATEN_COORDS: Record<string, [number, number]> = {
