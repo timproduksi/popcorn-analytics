@@ -207,7 +207,7 @@ const PetaTab = ({ rawData, sheets }: PetaTabProps) => {
     [phaseCountByKab]
   );
 
-  const phaseColor = COLORS[PHASE_MAP[selectedFase2]] || "#3b82f6";
+  const phaseColor = "#16a34a"; // green gradient
 
   // Initialize second map
   useEffect(() => {
