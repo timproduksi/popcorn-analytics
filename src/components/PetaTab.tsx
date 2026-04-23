@@ -102,6 +102,7 @@ const PetaTab = ({ rawData, sheets }: PetaTabProps) => {
   const markersRef = useRef<L.Marker[]>([]);
 
   // Second map (choropleth by phase count)
+  const [selectedSheet2, setSelectedSheet2] = useState<string>(sheets[0] || "");
   const [selectedKab2, setSelectedKab2] = useState<string>("ALL");
   const [selectedBulan2, setSelectedBulan2] = useState<number>(0);
   const [selectedFase2, setSelectedFase2] = useState<number>(1);
@@ -110,6 +111,7 @@ const PetaTab = ({ rawData, sheets }: PetaTabProps) => {
 
   useEffect(() => {
     if (sheets.length > 0 && !selectedSheet) setSelectedSheet(sheets[0]);
+    if (sheets.length > 0 && !selectedSheet2) setSelectedSheet2(sheets[0]);
   }, [sheets]);
 
   const kabupatenData = useMemo(() => {
@@ -184,7 +186,7 @@ const PetaTab = ({ rawData, sheets }: PetaTabProps) => {
 
   // ===== Second map: gradient by phase count =====
   const phaseCountByKab = useMemo(() => {
-    const data = rawData[selectedSheet] || [];
+    const data = rawData[selectedSheet2] || [];
     const counts: Record<string, number> = {};
     data.forEach(row => {
       const kab = String(row.A || row.Kabupaten || "").trim();
@@ -200,7 +202,7 @@ const PetaTab = ({ rawData, sheets }: PetaTabProps) => {
       }
     });
     return counts;
-  }, [rawData, selectedSheet, selectedBulan2, selectedFase2, selectedKab2]);
+  }, [rawData, selectedSheet2, selectedBulan2, selectedFase2, selectedKab2]);
 
   const maxCount = useMemo(
     () => Math.max(1, ...Object.values(phaseCountByKab)),
@@ -341,6 +343,13 @@ const PetaTab = ({ rawData, sheets }: PetaTabProps) => {
         </p>
 
         <div className="flex flex-wrap gap-3 mb-4">
+          <select
+            value={selectedSheet2}
+            onChange={e => setSelectedSheet2(e.target.value)}
+            className="px-3 py-2 rounded-lg bg-muted border border-border text-sm text-foreground"
+          >
+            {sheets.map(s => <option key={s} value={s}>{s}</option>)}
+          </select>
           <select
             value={selectedKab2}
             onChange={e => setSelectedKab2(e.target.value)}
