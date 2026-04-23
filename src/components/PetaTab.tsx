@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { COLORS, BULAN_NAMES } from "@/lib/api";
+import jatengGeo from "@/data/jateng-kab.json";
 
 // Approximate coordinates for Jawa Tengah kabupaten
 const KABUPATEN_COORDS: Record<string, [number, number]> = {
@@ -100,13 +101,12 @@ const PetaTab = ({ rawData, sheets }: PetaTabProps) => {
   const mapInstanceRef = useRef<L.Map | null>(null);
   const markersRef = useRef<L.Marker[]>([]);
 
-  // Second map (gradient by phase count)
+  // Second map (choropleth by phase count)
   const [selectedKab2, setSelectedKab2] = useState<string>("ALL");
   const [selectedBulan2, setSelectedBulan2] = useState<number>(0);
   const [selectedFase2, setSelectedFase2] = useState<number>(1);
   const map2Ref = useRef<HTMLDivElement>(null);
   const map2InstanceRef = useRef<L.Map | null>(null);
-  const markers2Ref = useRef<L.CircleMarker[]>([]);
 
   useEffect(() => {
     if (sheets.length > 0 && !selectedSheet) setSelectedSheet(sheets[0]);
@@ -207,7 +207,18 @@ const PetaTab = ({ rawData, sheets }: PetaTabProps) => {
     [phaseCountByKab]
   );
 
-  const phaseColor = "#16a34a"; // green gradient
+  const phaseColor = COLORS[PHASE_MAP[selectedFase2]] || "#16a34a";
+
+  // Map GeoJSON feature name -> BPS code
+  const nameToCode = useMemo(() => {
+    const m: Record<string, string> = {};
+    Object.entries(KABUPATEN_NAMES).forEach(([code, name]) => {
+      m[name.toLowerCase()] = code;
+      // also support "Salatiga" -> "Kota Salatiga"
+      m[name.replace(/^Kota\s+/i, "").toLowerCase()] = code;
+    });
+    return m;
+  }, []);
 
   // Initialize second map
   useEffect(() => {
@@ -220,36 +231,59 @@ const PetaTab = ({ rawData, sheets }: PetaTabProps) => {
     return () => { map.remove(); map2InstanceRef.current = null; };
   }, []);
 
-  // Update second map markers (gradient circles)
+  // helper: blend phaseColor with white based on intensity (0..1)
+  const shade = (hex: string, intensity: number) => {
+    const h = hex.replace("#", "");
+    const r = parseInt(h.substring(0, 2), 16);
+    const g = parseInt(h.substring(2, 4), 16);
+    const b = parseInt(h.substring(4, 6), 16);
+    // mix with white: t=0 -> white-ish, t=1 -> full color
+    const t = 0.15 + intensity * 0.85;
+    const mix = (c: number) => Math.round(255 + (c - 255) * t);
+    return `rgb(${mix(r)},${mix(g)},${mix(b)})`;
+  };
+
+  const geoLayerRef = useRef<L.GeoJSON | null>(null);
+
+  // Update choropleth GeoJSON layer
   useEffect(() => {
     const map = map2InstanceRef.current;
     if (!map) return;
-    markers2Ref.current.forEach(m => m.remove());
-    markers2Ref.current = [];
+    if (geoLayerRef.current) {
+      geoLayerRef.current.remove();
+      geoLayerRef.current = null;
+    }
 
-    Object.entries(phaseCountByKab)
-      .filter(([kab]) => KABUPATEN_COORDS[kab])
-      .forEach(([kab, count]) => {
-        const intensity = count / maxCount;
-        const radius = 8 + intensity * 28;
-        const opacity = count === 0 ? 0.15 : 0.35 + intensity * 0.55;
-        const marker = L.circleMarker(KABUPATEN_COORDS[kab], {
-          radius,
-          fillColor: phaseColor,
-          color: phaseColor,
-          weight: 1.5,
-          fillOpacity: opacity,
-          opacity: count === 0 ? 0.3 : 0.9,
-        }).bindPopup(
+    const layer = L.geoJSON(jatengGeo as any, {
+      style: (feature: any) => {
+        const name = String(feature.properties.name || "");
+        const code = nameToCode[name.toLowerCase()];
+        const count = code ? (phaseCountByKab[code] || 0) : 0;
+        const intensity = maxCount > 0 ? count / maxCount : 0;
+        return {
+          fillColor: count === 0 ? "#e5e7eb" : shade(phaseColor, intensity),
+          weight: 1,
+          color: "#ffffff",
+          fillOpacity: 0.9,
+        };
+      },
+      onEachFeature: (feature: any, lyr: L.Layer) => {
+        const name = String(feature.properties.name || "");
+        const code = nameToCode[name.toLowerCase()];
+        const count = code ? (phaseCountByKab[code] || 0) : 0;
+        const displayName = code ? KABUPATEN_NAMES[code] : name;
+        (lyr as L.Path).bindPopup(
           `<div style="font-size:12px;min-width:160px">
-            <b>${KABUPATEN_NAMES[kab] || kab}</b><br/>
+            <b>${displayName}</b><br/>
             <span style="color:#666">${PHASE_MAP[selectedFase2]}</span><br/>
             Jumlah: <b>${count}</b>
           </div>`
-        ).addTo(map);
-        markers2Ref.current.push(marker);
-      });
-  }, [phaseCountByKab, maxCount, phaseColor, selectedFase2]);
+        );
+      },
+    }).addTo(map);
+    geoLayerRef.current = layer;
+  }, [phaseCountByKab, maxCount, phaseColor, selectedFase2, nameToCode]);
+
 
   const totalFase = useMemo(
     () => Object.values(phaseCountByKab).reduce((s, n) => s + n, 0),
@@ -302,7 +336,7 @@ const PetaTab = ({ rawData, sheets }: PetaTabProps) => {
           Sebaran Jumlah Sub-Segmen per Fase Amatan
         </h2>
         <p className="text-xs text-muted-foreground mb-4">
-          Intensitas warna & ukuran lingkaran menunjukkan jumlah sub-segmen pada fase terpilih.
+          Choropleth: warna mengikuti fase amatan terpilih, intensitas berdasarkan jumlah sub-segmen.
           Total: <b>{totalFase}</b> sub-segmen.
         </p>
 
