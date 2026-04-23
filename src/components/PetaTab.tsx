@@ -111,6 +111,7 @@ const PetaTab = ({ rawData, sheets }: PetaTabProps) => {
 
   useEffect(() => {
     if (sheets.length > 0 && !selectedSheet) setSelectedSheet(sheets[0]);
+    if (sheets.length > 0 && !selectedSheet2) setSelectedSheet2(sheets[0]);
   }, [sheets]);
 
   const kabupatenData = useMemo(() => {
