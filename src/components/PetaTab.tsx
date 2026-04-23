@@ -91,12 +91,22 @@ const PHASE_MAP: Record<number, string> = {
   11: "Puso", 15: "Bera",
 };
 
+const PHASE_OPTIONS = Object.entries(PHASE_MAP).map(([k, v]) => ({ code: Number(k), name: v }));
+
 const PetaTab = ({ rawData, sheets }: PetaTabProps) => {
   const [selectedSheet, setSelectedSheet] = useState(sheets[0] || "");
   const [selectedBulan, setSelectedBulan] = useState(0);
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
   const markersRef = useRef<L.Marker[]>([]);
+
+  // Second map (gradient by phase count)
+  const [selectedKab2, setSelectedKab2] = useState<string>("ALL");
+  const [selectedBulan2, setSelectedBulan2] = useState<number>(0);
+  const [selectedFase2, setSelectedFase2] = useState<number>(1);
+  const map2Ref = useRef<HTMLDivElement>(null);
+  const map2InstanceRef = useRef<L.Map | null>(null);
+  const markers2Ref = useRef<L.CircleMarker[]>([]);
 
   useEffect(() => {
     if (sheets.length > 0 && !selectedSheet) setSelectedSheet(sheets[0]);
@@ -170,7 +180,81 @@ const PetaTab = ({ rawData, sheets }: PetaTabProps) => {
           .addTo(map);
         markersRef.current.push(marker);
       });
-  }, [kabupatenData]);
+      }, [kabupatenData]);
+
+  // ===== Second map: gradient by phase count =====
+  const phaseCountByKab = useMemo(() => {
+    const data = rawData[selectedSheet] || [];
+    const counts: Record<string, number> = {};
+    data.forEach(row => {
+      const kab = String(row.A || row.Kabupaten || "").trim();
+      if (!kab) return;
+      if (selectedKab2 !== "ALL" && kab !== selectedKab2) return;
+      const colIndex = selectedBulan2 + 3;
+      const colName = String.fromCharCode(65 + colIndex);
+      const nilai = parseInt(row[colName] || row[Object.keys(row)[colIndex]] || "0");
+      if (nilai === selectedFase2) {
+        counts[kab] = (counts[kab] || 0) + 1;
+      } else if (!(kab in counts)) {
+        counts[kab] = 0;
+      }
+    });
+    return counts;
+  }, [rawData, selectedSheet, selectedBulan2, selectedFase2, selectedKab2]);
+
+  const maxCount = useMemo(
+    () => Math.max(1, ...Object.values(phaseCountByKab)),
+    [phaseCountByKab]
+  );
+
+  const phaseColor = COLORS[PHASE_MAP[selectedFase2]] || "#3b82f6";
+
+  // Initialize second map
+  useEffect(() => {
+    if (!map2Ref.current || map2InstanceRef.current) return;
+    const map = L.map(map2Ref.current).setView([-7.15, 110.0], 8);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OSM</a>',
+    }).addTo(map);
+    map2InstanceRef.current = map;
+    return () => { map.remove(); map2InstanceRef.current = null; };
+  }, []);
+
+  // Update second map markers (gradient circles)
+  useEffect(() => {
+    const map = map2InstanceRef.current;
+    if (!map) return;
+    markers2Ref.current.forEach(m => m.remove());
+    markers2Ref.current = [];
+
+    Object.entries(phaseCountByKab)
+      .filter(([kab]) => KABUPATEN_COORDS[kab])
+      .forEach(([kab, count]) => {
+        const intensity = count / maxCount;
+        const radius = 8 + intensity * 28;
+        const opacity = count === 0 ? 0.15 : 0.35 + intensity * 0.55;
+        const marker = L.circleMarker(KABUPATEN_COORDS[kab], {
+          radius,
+          fillColor: phaseColor,
+          color: phaseColor,
+          weight: 1.5,
+          fillOpacity: opacity,
+          opacity: count === 0 ? 0.3 : 0.9,
+        }).bindPopup(
+          `<div style="font-size:12px;min-width:160px">
+            <b>${KABUPATEN_NAMES[kab] || kab}</b><br/>
+            <span style="color:#666">${PHASE_MAP[selectedFase2]}</span><br/>
+            Jumlah: <b>${count}</b>
+          </div>`
+        ).addTo(map);
+        markers2Ref.current.push(marker);
+      });
+  }, [phaseCountByKab, maxCount, phaseColor, selectedFase2]);
+
+  const totalFase = useMemo(
+    () => Object.values(phaseCountByKab).reduce((s, n) => s + n, 0),
+    [phaseCountByKab]
+  );
 
   return (
     <div className="space-y-4">
@@ -209,6 +293,62 @@ const PetaTab = ({ rawData, sheets }: PetaTabProps) => {
               <span className="text-muted-foreground">{label}</span>
             </div>
           ))}
+        </div>
+      </div>
+
+      {/* Second map: gradient by phase */}
+      <div className="glass-card rounded-xl p-4">
+        <h2 className="text-lg font-bold mb-1 text-foreground">
+          Sebaran Jumlah Sub-Segmen per Fase Amatan
+        </h2>
+        <p className="text-xs text-muted-foreground mb-4">
+          Intensitas warna & ukuran lingkaran menunjukkan jumlah sub-segmen pada fase terpilih.
+          Total: <b>{totalFase}</b> sub-segmen.
+        </p>
+
+        <div className="flex flex-wrap gap-3 mb-4">
+          <select
+            value={selectedKab2}
+            onChange={e => setSelectedKab2(e.target.value)}
+            className="px-3 py-2 rounded-lg bg-muted border border-border text-sm text-foreground"
+          >
+            <option value="ALL">Semua Kabupaten</option>
+            {Object.entries(KABUPATEN_NAMES).map(([code, name]) => (
+              <option key={code} value={code}>{name}</option>
+            ))}
+          </select>
+          <select
+            value={selectedBulan2}
+            onChange={e => setSelectedBulan2(Number(e.target.value))}
+            className="px-3 py-2 rounded-lg bg-muted border border-border text-sm text-foreground"
+          >
+            {BULAN_NAMES.map((b, i) => <option key={i} value={i}>{b}</option>)}
+          </select>
+          <select
+            value={selectedFase2}
+            onChange={e => setSelectedFase2(Number(e.target.value))}
+            className="px-3 py-2 rounded-lg bg-muted border border-border text-sm text-foreground"
+          >
+            {PHASE_OPTIONS.map(p => (
+              <option key={p.code} value={p.code}>{p.code} — {p.name}</option>
+            ))}
+          </select>
+        </div>
+
+        <div
+          ref={map2Ref}
+          className="rounded-xl overflow-hidden border border-border"
+          style={{ height: "500px" }}
+        />
+
+        <div className="mt-4 flex items-center gap-3 text-xs">
+          <span className="text-muted-foreground">Gradasi:</span>
+          <div
+            className="h-3 w-48 rounded-sm border border-border"
+            style={{ background: `linear-gradient(to right, ${phaseColor}22, ${phaseColor})` }}
+          />
+          <span className="text-muted-foreground">0</span>
+          <span className="text-muted-foreground ml-auto">Maks: {maxCount}</span>
         </div>
       </div>
     </div>
