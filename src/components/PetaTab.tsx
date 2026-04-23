@@ -101,13 +101,12 @@ const PetaTab = ({ rawData, sheets }: PetaTabProps) => {
   const mapInstanceRef = useRef<L.Map | null>(null);
   const markersRef = useRef<L.Marker[]>([]);
 
-  // Second map (gradient by phase count)
+  // Second map (choropleth by phase count)
   const [selectedKab2, setSelectedKab2] = useState<string>("ALL");
   const [selectedBulan2, setSelectedBulan2] = useState<number>(0);
   const [selectedFase2, setSelectedFase2] = useState<number>(1);
   const map2Ref = useRef<HTMLDivElement>(null);
   const map2InstanceRef = useRef<L.Map | null>(null);
-  const markers2Ref = useRef<L.CircleMarker[]>([]);
 
   useEffect(() => {
     if (sheets.length > 0 && !selectedSheet) setSelectedSheet(sheets[0]);
