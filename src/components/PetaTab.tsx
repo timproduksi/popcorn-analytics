@@ -336,7 +336,7 @@ const PetaTab = ({ rawData, sheets }: PetaTabProps) => {
           Sebaran Jumlah Sub-Segmen per Fase Amatan
         </h2>
         <p className="text-xs text-muted-foreground mb-4">
-          Intensitas warna & ukuran lingkaran menunjukkan jumlah sub-segmen pada fase terpilih.
+          Choropleth: warna mengikuti fase amatan terpilih, intensitas berdasarkan jumlah sub-segmen.
           Total: <b>{totalFase}</b> sub-segmen.
         </p>
 
